@@ -65,8 +65,12 @@
             <?php if (isset($_SESSION['nombre'])): ?>
               <!-- Usuario logueado -->
               <div class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#162752] text-white shadow-md">
-                <img src="<?php echo $_SESSION['foto']; ?>" class="w-8 h-8 rounded-full" alt="Foto perfil">
-                <span><?php echo $_SESSION['nombre']." ".$_SESSION['apellidoPaterno']; ?></span>
+                <a href="perfil.php">
+                  <img src="<?php echo $_SESSION['foto']; ?>" class="w-8 h-8 rounded-full" alt="Foto perfil">
+                </a>
+                <a href="perfil.php">
+                  <span><?php echo $_SESSION['nombre']." ".$_SESSION['apellidoPaterno']; ?></span>
+                </a>
                 <a href="logout.php" class="ml-4 text-red-600 hover:underline">Cerrar sesión</a>
               </div>
             <?php else: ?>
@@ -86,24 +90,62 @@
               </a>
             <?php endif; ?>
           </li>
+          <li>
+            <!-- Carrito de préstamo -->
+            <?php if (isset($_SESSION['id_usuario'])): ?>
+              <?php 
+                $carrito_count = 0;
+                if (isset($_SESSION['carrito_prestamo'])) {
+                  // Solo cuenta los libros que realmente están en el carrito
+                  $carrito_count = count(array_filter($_SESSION['carrito_prestamo']));
+                }
+              ?>
+              <a href="carrito_prestamo.php" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4" />
+                </svg>
+                <span>(<?php echo $carrito_count; ?>)</span>
+              </a>
+            <?php endif;?>
+          </li>
         </ul>
       </nav>
     </div>
   </header>
 
   <!-- panel de bienvenida -->
-  <section class="relative bg-cover bg-center text-white text-center min-h-[440px] flex items-center justify-center" style="background-image: url('https://picsum.photos/1400/600?random=10');"><!-- esto muestra la imagen -->
-    <!--cuadro con buscador-->
+  <section class="relative bg-cover bg-center text-white text-center min-h-[440px] flex items-center justify-center" 
+    style="background-image: url('https://picsum.photos/1400/600?random=10');">
+    
+    <!-- cuadro con buscador -->
     <div class="bg-black/40 p-8 max-w-3xl mx-auto rounded">
       <h2 class="text-3xl font-extrabold mb-2 drop-shadow">Bienvenido a la Biblioteca del Instituto Simón Bolívar</h2>
       <p class="mb-6 text-white/90">Encuentra y consulta tus libros de manera rápida y sencilla.</p>
-      <!--buscador-->
-      <form class="flex items-center gap-2 max-w-xl mx-auto" onsubmit="event.preventDefault(); alert('Simulación: buscar → ' + this.query.value);">
-        <input name="query" type="search" placeholder="Escribe título, autor o categoría" class="flex-1 px-4 py-3 rounded-full text-sm text-gray-900 shadow-md" />
-        <button type="submit" class="bg-[#203474] text-white px-5 py-2 rounded-full font-bold shadow-md hover:shadow-lg hover:-translate-y-[2px] transition">Buscar</button>
-      </form>
+
+      <!-- buscador -->
+      <div class="max-w-3xl mx-auto my-10">
+        <form class="flex items-center gap-2 relative" onsubmit="return false;">
+          <input 
+            id="buscador" 
+            type="search" 
+            placeholder="Buscar libros por título, autor o categoría..." 
+            class="flex-1 px-4 py-3 rounded-full text-sm text-gray-900 shadow-md"
+            autocomplete="off"
+          />
+          <button 
+            type="button" 
+            onclick="buscarLibros()" 
+            class="bg-[#203474] text-white px-5 py-2 rounded-full font-bold shadow-md hover:bg-[#162752] transition">
+            Buscar
+          </button>
+        </form>
+      </div>
+      <div id="resultados-busqueda" 
+          class="mt-4 max-h-64 overflow-y-auto bg-white rounded-lg shadow-md p-4 text-left hidden">
+      </div>
     </div>
   </section>
+
 
   <!-- noticias -->
   <section id="noticias" class="container mx-auto py-12 px-12 relative">
@@ -325,6 +367,32 @@
       </div>
     </div>
   </footer>
-  
+<script>
+const buscador = document.getElementById('buscador');
+const resultadosDiv = document.getElementById('resultados-busqueda');
+
+// Escuchar cada vez que el usuario escribe
+buscador.addEventListener('input', function() {
+    const query = this.value.trim();
+
+    if (query === '') {
+        resultadosDiv.innerHTML = '';
+        resultadosDiv.classList.add('hidden');
+        return;
+    }
+
+    // Buscar mientras escribe
+    fetch('buscar_libros.php?q=' + encodeURIComponent(query))
+        .then(response => response.text())
+        .then(data => {
+            resultadosDiv.innerHTML = data.trim() || '<p class="text-gray-500">No se encontraron libros.</p>';
+            resultadosDiv.classList.remove('hidden');
+        })
+        .catch(error => console.error('Error:', error));
+});
+</script>
+
+
 </body>
 </html>
+

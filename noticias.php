@@ -101,6 +101,24 @@ $query = $mysqli->query("SELECT * FROM Noticias ORDER BY fecha_publicacion DESC 
               </a>
             <?php endif; ?>
           </li>
+          <li>
+            <!-- Carrito de préstamo -->
+            <?php if (isset($_SESSION['id_usuario'])): ?>
+              <?php 
+                $carrito_count = 0;
+                if (isset($_SESSION['carrito_prestamo'])) {
+                  // Solo cuenta los libros que realmente están en el carrito
+                  $carrito_count = count(array_filter($_SESSION['carrito_prestamo']));
+                }
+              ?>
+              <a href="carrito_prestamo.php" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4" />
+                </svg>
+                <span>(<?php echo $carrito_count; ?>)</span>
+              </a>
+            <?php endif;?>
+          </li>
         </ul>
       </nav>
     </div>
@@ -118,9 +136,6 @@ $query = $mysqli->query("SELECT * FROM Noticias ORDER BY fecha_publicacion DESC 
             <div class="relative overflow-hidden rounded-t-3xl">
               <img src="<?= htmlspecialchars($row['imagen']) ?>" 
                    class="w-full h-60 object-cover transition-transform duration-500 hover:scale-110">
-              <span class="absolute top-3 left-3 bg-[#203474] text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md uppercase tracking-wide">
-                Noticia
-              </span>
             </div>
             <div class="p-6 flex flex-col justify-between h-52">
               <div>

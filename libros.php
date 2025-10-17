@@ -1,7 +1,25 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 session_start();
 include("conexion.php");
 $mysqli = Conectarse();
+
+// Agregar libro al carrito de préstamo
+if (isset($_GET['agregar'])) {
+    $id_libro = (int)$_GET['agregar'];
+    if (!isset($_SESSION['carrito_prestamo'][$id_libro])) {
+        $_SESSION['carrito_prestamo'][$id_libro] = [
+            'tiempo' => 7 // tiempo inicial de préstamo en días
+        ];
+    }
+    header('Location: libros.php');
+    exit;
+}
+
+// Obtener todos los libros
+$result = $mysqli->query("SELECT * FROM Libros");
 ?>
 
 <!DOCTYPE html>
@@ -86,6 +104,24 @@ $mysqli = Conectarse();
               </a>
             <?php endif; ?>
           </li>
+          <li>
+            <!-- Carrito de préstamo -->
+            <?php if (isset($_SESSION['id_usuario'])): ?>
+              <?php 
+                $carrito_count = 0;
+                if (isset($_SESSION['carrito_prestamo'])) {
+                  // Solo cuenta los libros que realmente están en el carrito
+                  $carrito_count = count(array_filter($_SESSION['carrito_prestamo']));
+                }
+              ?>
+              <a href="carrito_prestamo.php" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4" />
+                </svg>
+                <span>(<?php echo $carrito_count; ?>)</span>
+              </a>
+            <?php endif;?>
+          </li>
         </ul>
       </nav>
     </div>
@@ -116,109 +152,29 @@ $mysqli = Conectarse();
 
       <!-- cards -->
       <div class="grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
+        <?php //esto muestra todos los programas
+          $result = $mysqli->query("SELECT nombre, descripcionBreve, portada ,id_programa
+                                    FROM Programas");
 
-        <!-- gestion -->
-        <a href="">
-          <div
-            class="group bg-white/80 backdrop-blur-md rounded-3xl shadow-xl overflow-hidden transform hover:-translate-y-3 hover:scale-105 transition duration-500 hover:shadow-2xl">
-            <img src="https://picsum.photos/400/250?random" alt=""
-              class="w-full h-48 object-cover group-hover:scale-110 transition duration-500">
-            <div class="p-8 flex flex-col h-full">
-              <h4 class="text-2xl font-bold text-[#203474] mb-3 group-hover:text-[#4f6bbf] transition">Gestión Empresarial</h4>
-              <p class="text-gray-600">Material sobre planificación estratégica, administración de recursos y optimización de procesos empresariales.</p>
-            </div>
-          </div>
-        </a>
-
-        <!-- marketing -->
-        <a href="">
-          <div
-            class="group bg-white/80 backdrop-blur-md rounded-3xl shadow-xl overflow-hidden transform hover:-translate-y-3 hover:scale-105 transition duration-500 hover:shadow-2xl">
-            <img src="https://picsum.photos/400/250?random" alt=""
-              class="w-full h-48 object-cover group-hover:scale-110 transition duration-500">
-            <div class="p-8 flex flex-col h-full">
-              <h4 class="text-2xl font-bold text-[#203474] mb-3 group-hover:text-[#4f6bbf] transition">Marketing y Ventas</h4>
-              <p class="text-gray-600">Recursos sobre técnicas de marketing, investigación de mercado, publicidad y gestión de ventas efectivas.</p>
-            </div>
-          </div>
-        </a>
-
-        <!-- recursos -->
-        <a href="">
-          <div
-            class="group bg-white/80 backdrop-blur-md rounded-3xl shadow-xl overflow-hidden transform hover:-translate-y-3 hover:scale-105 transition duration-500 hover:shadow-2xl">
-            <img src="https://picsum.photos/400/250?random" alt=""
-              class="w-full h-48 object-cover group-hover:scale-110 transition duration-500">
-            <div class="p-8 flex flex-col h-full">
-              <h4 class="text-2xl font-bold text-[#203474] mb-3 group-hover:text-[#4f6bbf] transition">Recursos Humanos</h4>
-              <p class="text-gray-600">Información sobre reclutamiento, selección, capacitación y desarrollo del talento humano en las empresas.</p>
-            </div>
-          </div>
-        </a>
-
+          while($row = $result->fetch_assoc()){
+            echo "
+              <div class='group bg-white/80 backdrop-blur-md rounded-3xl shadow-xl overflow-hidden transform hover:-translate-y-3 hover:scale-105 transition duration-500 hover:shadow-2xl'>
+                <a href='programas_libros.php?id={$row['id_programa']}'>
+                    <img src='{$row['portada']}' class='w-full h-48 object-cover group-hover:scale-110 transition duration-500'>
+                    <div class='p-8 flex flex-col h-full'>
+                      <h4 class='text-2xl font-bold text-[#203474] mb-3 group-hover:text-[#4f6bbf] transition'>{$row['nombre']}</h4>
+                      <p class='text-gray-600 flex-1 mb-4'>{$row['descripcionBreve']}</p>
+                    </div>
+                </a>
+              </div>
+              
+              ";
+          }
+          ?>
       </div>
   </div>
 
-  <!-- libros mas pedidos -->
-  <section class="relative py-16">
-    <div class="max-w-7xl mx-auto px-6 text-center">
-      <h1 class="text-5xl font-bold text-[#203474] mb-12">Libros más pedidos</h1>
-      <p class="text-lg text-center mb-10">
-        Descubre los libros más leídos y recomendados en la carrera de Administración de Empresas.
-      </p>
-
-      <div class="grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
-        <!-- libro 1 -->
-        <div
-          class="group bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-2 hover:shadow-2xl transition flex flex-col">
-          <img src="https://picsum.photos/400/250?random=1" alt=""
-            class="w-full h-56 object-cover group-hover:scale-105 transition duration-500">
-          <div class="p-6 flex flex-col flex-1 justify-between">
-            <div>
-              <h3 class="text-xl font-bold text-[#203474] mb-3 group-hover:text-[#4f6bbf] transition">libro 1</h3>
-              <p class="text-gray-600 mb-4">falta llenar descripcion corta.</p>
-            </div>
-            <a href="#"
-              class="inline-block mt-auto px-5 py-2 bg-[#203474] text-white rounded-full font-bold shadow-md hover:shadow-lg hover:-translate-y-[2px] transition">Ver
-              libro</a>
-          </div>
-        </div>
-
-        <!-- libro 2 -->
-        <div
-          class="group bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-2 hover:shadow-2xl transition flex flex-col">
-          <img src="https://picsum.photos/400/250?random=2" alt=""
-            class="w-full h-56 object-cover group-hover:scale-105 transition duration-500">
-          <div class="p-6 flex flex-col flex-1 justify-between">
-            <div>
-              <h3 class="text-xl font-bold text-[#203474] mb-3 group-hover:text-[#4f6bbf] transition">libro 2</h3>
-              <p class="text-gray-600 mb-4">falta llenar descripcion corta.</p>
-            </div>
-            <a href="#"
-              class="inline-block mt-auto px-5 py-2 bg-[#203474] text-white rounded-full font-bold shadow-md hover:shadow-lg hover:-translate-y-[2px] transition">Ver
-              libro</a>
-          </div>
-        </div>
-
-        <!-- libro 3 -->
-        <div
-          class="group bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-2 hover:shadow-2xl transition flex flex-col">
-          <img src="https://picsum.photos/400/250?random=3" alt=""
-            class="w-full h-56 object-cover group-hover:scale-105 transition duration-500">
-          <div class="p-6 flex flex-col flex-1 justify-between">
-            <div>
-              <h3 class="text-xl font-bold text-[#203474] mb-3 group-hover:text-[#4f6bbf] transition">Libro 3</h3>
-              <p class="text-gray-600 mb-4">falta llenar descripcion corta.</p>
-            </div>
-            <a href="#"
-              class="inline-block mt-auto px-5 py-2 bg-[#203474] text-white rounded-full font-bold shadow-md hover:shadow-lg hover:-translate-y-[2px] transition">Ver
-              libro</a>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
+  
   </div>
 
   <!-- footer -->
@@ -275,6 +231,5 @@ $mysqli = Conectarse();
       </div>
     </div>
   </footer>
-
 </body>
 </html>
